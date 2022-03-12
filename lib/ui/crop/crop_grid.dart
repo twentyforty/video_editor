@@ -66,6 +66,10 @@ class _CropGridViewerState extends State<CropGridViewer> {
 
       // init the crop area with preferredCropAspectRatio
       WidgetsBinding.instance!.addPostFrameCallback((_) {
+        _rect.value = _calculateCropRect(
+          _controller.cacheMinCrop,
+          _controller.cacheMaxCrop,
+        );
         _updateRect();
       });
     } else {
@@ -88,9 +92,7 @@ class _CropGridViewerState extends State<CropGridViewer> {
 
   void _updateRect() {
     _transform.value = TransformData.fromController(_controller);
-    if (_preferredCropAspectRatio == null ||
-        _controller.preferredCropAspectRatio != _preferredCropAspectRatio) {
-      _preferredCropAspectRatio = _controller.preferredCropAspectRatio;
+    if (_controller.preferredCropAspectRatio != _preferredCropAspectRatio) {
       _calculatePreferedCrop();
     } else {
       _onPanEnd(force: true);
@@ -98,12 +100,68 @@ class _CropGridViewerState extends State<CropGridViewer> {
   }
 
   void _calculatePreferedCrop() {
+    _preferredCropAspectRatio = _controller.preferredCropAspectRatio;
+
+    if (_preferredCropAspectRatio == null) return;
+
+    double _rectHeight = _rect.value.height;
+    double _rectWidth = _rect.value.width;
+
+    void _changeWidth() {
+      final _w = _rectHeight / _preferredCropAspectRatio!;
+      if (_w > _layout.width) {
+        _rectWidth = _layout.width;
+        _rectHeight = _rectWidth / _preferredCropAspectRatio!;
+      } else
+        _rectWidth = _w;
+    }
+
+    void _changeHeight() {
+      final _h = _rectWidth / _preferredCropAspectRatio!;
+      if (_h > _layout.height) {
+        _rectHeight = _layout.height;
+        _rectWidth = _rectHeight / _preferredCropAspectRatio!;
+      } else
+        _rectHeight = _h;
+    }
+
+    // calculate new crop area respecting `_preferredCropAspectRatio`
+    if (((_controller.rotation != 90 && _controller.rotation != 270)) &&
+        _layout.height >= _layout.width) {
+      if (_preferredCropAspectRatio! >= 1)
+        _changeHeight();
+      else
+        _changeWidth();
+    } else {
+      if (_preferredCropAspectRatio! >= 1)
+        _changeWidth();
+      else
+        _changeHeight();
+    }
+
+    // create the new crop area around the current one
+    Rect _newCrop = Rect.fromCenter(
+      center: _rect.value.center,
+      width: _rectWidth,
+      height: _rectHeight,
+    );
+
+    // translate it in case it is out of bounds
+    if (_newCrop.bottom > _layout.height) {
+      _newCrop = _newCrop.translate(0, _layout.height - _newCrop.bottom);
+    }
+    if (_newCrop.top < 0.0) {
+      _newCrop = _newCrop.translate(0, _newCrop.top.abs());
+    }
+    if (_newCrop.left < 0.0) {
+      _newCrop = _newCrop.translate(_newCrop.left.abs(), 0);
+    }
+    if (_newCrop.right > _layout.width) {
+      _newCrop = _newCrop.translate(_layout.width - _newCrop.right, 0);
+    }
+
     setState(() {
-      _rect.value = _calculateCropRect(
-        _controller.cacheMinCrop,
-        _controller.cacheMaxCrop,
-      );
-      _changeRect();
+      _rect.value = _newCrop;
       _onPanEnd(force: true);
     });
   }
@@ -188,26 +246,17 @@ class _CropGridViewerState extends State<CropGridViewer> {
         case _CropBoundaries.topLeft:
           final Offset pos = _rect.value.topLeft + delta;
           _changeRect(
-            top: _preferredCropAspectRatio == null ? pos.dy : pos.dy,
-            left: _preferredCropAspectRatio == null
-                ? pos.dx
-                : pos.dx / _preferredCropAspectRatio!,
+            top: pos.dy,
+            left: pos.dx,
             width: _rect.value.width - delta.dx,
-            height: _preferredCropAspectRatio == null
-                ? _rect.value.height - delta.dy
-                : null,
+            height: _rect.value.height - delta.dy,
           );
           break;
         case _CropBoundaries.topRight:
           _changeRect(
-            top: _preferredCropAspectRatio == null
-                ? _rect.value.topRight.dy + delta.dy
-                : (_rect.value.topRight.dy +
-                    (delta.dy * _preferredCropAspectRatio!)),
+            top: _rect.value.top + delta.dy,
             width: _rect.value.width + delta.dx,
-            height: _preferredCropAspectRatio == null
-                ? _rect.value.height - delta.dy
-                : null,
+            height: _rect.value.height - delta.dy,
           );
           break;
         case _CropBoundaries.bottomRight:
@@ -273,9 +322,9 @@ class _CropGridViewerState extends State<CropGridViewer> {
     height = height ?? _rect.value.height;
 
     if (_preferredCropAspectRatio != null) {
-      if (height > width) {
+      if (_preferredCropAspectRatio! >= 1) {
         height = width / _preferredCropAspectRatio!;
-      } else if (height < width) {
+      } else {
         width = height / _preferredCropAspectRatio!;
       }
     }
