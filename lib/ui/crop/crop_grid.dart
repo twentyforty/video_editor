@@ -103,31 +103,31 @@ class _CropGridViewerState extends State<CropGridViewer> {
     final _oldRatio = _controller.preferredCropAspectRatio;
     _preferredCropAspectRatio = _controller.preferredCropAspectRatio;
 
-    if (_preferredCropAspectRatio == null) return;
-
     final double _rectHeight = _rect.value.height;
     final double _rectWidth = _rect.value.width;
-
-    // update crop aspect ratio
     Rect _newCrop = _rect.value;
-    // if current crop ratio is bigger than new aspect ratio
-    // or if previous ratio smaller than new aspect ratio (so when switching of aspect ratio the crop area is not always getting smaller)
-    // resize on width
-    if (_rectWidth / _rectHeight > _preferredCropAspectRatio! &&
-        (_oldRatio != null && _oldRatio < _preferredCropAspectRatio!)) {
-      final w = _rectHeight * _preferredCropAspectRatio!;
-      _newCrop = Rect.fromLTWH(_rect.value.center.dx - w / 2, _rect.value.top,
-          w, _rect.value.height);
-    } else {
-      // otherwise, resize on height
-      final h = _rectWidth / _preferredCropAspectRatio!;
-      _newCrop = Rect.fromLTWH(_rect.value.left, _rect.value.center.dy - h / 2,
-          _rect.value.width, h);
+
+    if (_preferredCropAspectRatio != null) {
+      // if current crop ratio is bigger than new aspect ratio
+      // or if previous ratio smaller than new aspect ratio (so when switching of aspect ratio the crop area is not always getting smaller)
+      // resize on width
+      if (_rectWidth / _rectHeight > _preferredCropAspectRatio! &&
+          (_oldRatio != null && _oldRatio < _preferredCropAspectRatio!)) {
+        final w = _rectHeight * _preferredCropAspectRatio!;
+        _newCrop = Rect.fromLTWH(_rect.value.center.dx - w / 2, _rect.value.top,
+            w, _rect.value.height);
+      } else {
+        // otherwise, resize on height
+        final h = _rectWidth / _preferredCropAspectRatio!;
+        _newCrop = Rect.fromLTWH(_rect.value.left,
+            _rect.value.center.dy - h / 2, _rect.value.width, h);
+      }
     }
 
     // if new crop is bigger than available space, block to maximum size and avoid out of bounds
     if (_newCrop.width > _layout.width) {
-      final _h = _layout.width / _preferredCropAspectRatio!;
+      final _h = _layout.width /
+          (_preferredCropAspectRatio ?? (_rectWidth / _rectHeight));
       _newCrop = Rect.fromLTWH(
         0.0,
         _newCrop.top.clamp(0, _layout.height - _h),
@@ -135,7 +135,8 @@ class _CropGridViewerState extends State<CropGridViewer> {
         _h,
       );
     } else if (_newCrop.height > _layout.height) {
-      final _w = _layout.height / _preferredCropAspectRatio!;
+      final _w = _layout.height /
+          (_preferredCropAspectRatio ?? (_rectWidth / _rectHeight));
       _newCrop = Rect.fromLTWH(
         _newCrop.left.clamp(0, _layout.width - _w),
         0.0,
@@ -213,9 +214,10 @@ class _CropGridViewerState extends State<CropGridViewer> {
           _boundary = _CropBoundaries.centerLeft;
         } else if (pos >= topRight.bottomLeft && pos <= bottomRight.topRight) {
           _boundary = _CropBoundaries.centerRight;
+        } else {
+          //OTHERS
+          _boundary = _CropBoundaries.inside;
         }
-        //OTHERS
-        _boundary = _CropBoundaries.inside;
       } else {
         _boundary = _CropBoundaries.inside;
       }
