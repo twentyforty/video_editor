@@ -99,6 +99,7 @@ class _CropGridViewerState extends State<CropGridViewer> {
     }
   }
 
+  // TODO : fix some crop area are reversed (4:5) -> (5:4)
   void _calculatePreferedCrop() {
     _preferredCropAspectRatio = _controller.preferredCropAspectRatio;
 
@@ -240,56 +241,41 @@ class _CropGridViewerState extends State<CropGridViewer> {
       switch (_boundary) {
         case _CropBoundaries.inside:
           final Offset pos = _rect.value.topLeft + delta;
-          _changeRect(left: pos.dx, top: pos.dy);
+          _rect.value = _rect.value = Rect.fromLTWH(
+              pos.dx.clamp(0, _layout.width - _rect.value.width),
+              pos.dy.clamp(0, _layout.height - _rect.value.height),
+              _rect.value.width,
+              _rect.value.height);
           break;
         //CORNERS
         case _CropBoundaries.topLeft:
           final Offset pos = _rect.value.topLeft + delta;
-          _changeRect(
-            top: pos.dy,
-            left: pos.dx,
-            width: _rect.value.width - delta.dx,
-            height: _rect.value.height - delta.dy,
-          );
+          _changeRect(left: pos.dx, top: pos.dy);
           break;
         case _CropBoundaries.topRight:
-          _changeRect(
-            top: _rect.value.top + delta.dy,
-            width: _rect.value.width + delta.dx,
-            height: _rect.value.height - delta.dy,
-          );
+          final Offset pos = _rect.value.topRight + delta;
+          _changeRect(right: pos.dx, top: pos.dy);
           break;
         case _CropBoundaries.bottomRight:
-          _changeRect(
-            width: _rect.value.width + delta.dx,
-            height: _rect.value.height + delta.dy,
-          );
+          final Offset pos = _rect.value.bottomRight + delta;
+          _changeRect(right: pos.dx, bottom: pos.dy);
           break;
         case _CropBoundaries.bottomLeft:
-          _changeRect(
-            left: _rect.value.bottomLeft.dx + delta.dx,
-            width: _rect.value.width - delta.dx,
-            height: _rect.value.height + delta.dy,
-          );
+          final Offset pos = _rect.value.bottomLeft + delta;
+          _changeRect(left: pos.dx, bottom: pos.dy);
           break;
         //CENTERS
         case _CropBoundaries.topCenter:
-          _changeRect(
-            top: _rect.value.top + delta.dy,
-            height: _rect.value.height - delta.dy,
-          );
+          _changeRect(top: _rect.value.top + delta.dy);
           break;
         case _CropBoundaries.bottomCenter:
-          _changeRect(height: _rect.value.height + delta.dy);
+          _changeRect(bottom: _rect.value.bottom + delta.dy);
           break;
         case _CropBoundaries.centerLeft:
-          _changeRect(
-            left: _rect.value.left + delta.dx,
-            width: _rect.value.width - delta.dx,
-          );
+          _changeRect(left: _rect.value.left + delta.dx);
           break;
         case _CropBoundaries.centerRight:
-          _changeRect(width: _rect.value.width + delta.dx);
+          _changeRect(right: _rect.value.right + delta.dx);
           break;
         case _CropBoundaries.none:
           break;
@@ -315,42 +301,54 @@ class _CropGridViewerState extends State<CropGridViewer> {
   //-----------//
   //RECT CHANGE//
   //-----------//
-  void _changeRect({double? left, double? top, double? width, double? height}) {
-    top = top ?? _rect.value.top;
-    left = left ?? _rect.value.left;
-    width = width ?? _rect.value.width;
-    height = height ?? _rect.value.height;
+  void _changeRect({
+    double? left,
+    double? top,
+    double? right,
+    double? bottom,
+  }) {
+    top = (top ?? _rect.value.top).clamp(0, _rect.value.bottom - _margin.dy);
+    left = (left ?? _rect.value.left).clamp(0, _rect.value.right - _margin.dx);
+    right = (right ?? _rect.value.right)
+        .clamp(_rect.value.left + _margin.dx, _layout.width);
+    bottom = (bottom ?? _rect.value.bottom)
+        .clamp(_rect.value.top + _margin.dy, _layout.height);
 
+    // update crop height or width to adjust to the selected aspect ratio
     if (_preferredCropAspectRatio != null) {
-      if (_preferredCropAspectRatio! >= 1) {
-        height = width / _preferredCropAspectRatio!;
+      final width = right - left;
+      final height = bottom - top;
+
+      if (width / height > _preferredCropAspectRatio!) {
+        switch (_boundary) {
+          case _CropBoundaries.topLeft:
+          case _CropBoundaries.bottomLeft:
+            left = right - height * _preferredCropAspectRatio!;
+            break;
+          case _CropBoundaries.topRight:
+          case _CropBoundaries.bottomRight:
+            right = left + height * _preferredCropAspectRatio!;
+            break;
+          default:
+            assert(false);
+        }
       } else {
-        width = height / _preferredCropAspectRatio!;
+        switch (_boundary) {
+          case _CropBoundaries.topLeft:
+          case _CropBoundaries.topRight:
+            top = bottom - width / _preferredCropAspectRatio!;
+            break;
+          case _CropBoundaries.bottomLeft:
+          case _CropBoundaries.bottomRight:
+            bottom = top + width / _preferredCropAspectRatio!;
+            break;
+          default:
+            assert(false);
+        }
       }
     }
 
-    final double right = left + width;
-    final double bottom = top + height;
-
-    // TODO : sometimes cannot move the crop because considered as out of bound, but is actually in the middle
-    if (height > _margin.dx && width > _margin.dx) {
-      if (right > _layout.width) width = _rect.value.width;
-
-      _rect.value = Rect.fromLTWH(
-        left >= 0.0
-            ? right <= _layout.width
-                ? left
-                : _rect.value.left
-            : 0.0,
-        top >= 0.0
-            ? bottom <= _layout.height
-                ? top
-                : _rect.value.top
-            : 0.0,
-        width,
-        bottom <= _layout.height ? height : _rect.value.height,
-      );
-    }
+    _rect.value = Rect.fromLTRB(left, top, right, bottom);
   }
 
   Rect _calculateCropRect([Offset? min, Offset? max]) {
