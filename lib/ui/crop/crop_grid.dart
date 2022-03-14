@@ -211,15 +211,9 @@ class _CropGridViewerState extends State<CropGridViewer> {
           _boundary = _CropBoundaries.centerRight;
         }
         //OTHERS
-        else if (pos >= minMargin[1] && pos <= maxMargin[0]) {
-          _boundary = _CropBoundaries.inside;
-        } else {
-          _boundary = _CropBoundaries.none;
-        }
-      } else if (pos >= minMargin[1] && pos <= maxMargin[0]) {
         _boundary = _CropBoundaries.inside;
       } else {
-        _boundary = _CropBoundaries.none;
+        _boundary = _CropBoundaries.inside;
       }
     } else {
       _boundary = _CropBoundaries.none;
