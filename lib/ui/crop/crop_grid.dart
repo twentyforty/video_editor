@@ -99,66 +99,59 @@ class _CropGridViewerState extends State<CropGridViewer> {
     }
   }
 
-  // TODO : fix some crop area are reversed (4:5) -> (5:4)
   void _calculatePreferedCrop() {
     _preferredCropAspectRatio = _controller.preferredCropAspectRatio;
 
     if (_preferredCropAspectRatio == null) return;
 
-    double _rectHeight = _rect.value.height;
-    double _rectWidth = _rect.value.width;
+    final double _rectHeight = _rect.value.height;
+    final double _rectWidth = _rect.value.width;
+    final bool isLandscape = _layout.height > _layout.width;
 
-    void _changeWidth() {
-      final _w = _rectHeight / _preferredCropAspectRatio!;
-      if (_w > _layout.width) {
-        _rectWidth = _layout.width;
-        _rectHeight = _rectWidth / _preferredCropAspectRatio!;
-      } else
-        _rectWidth = _w;
-    }
-
-    void _changeHeight() {
-      final _h = _rectWidth / _preferredCropAspectRatio!;
-      if (_h > _layout.height) {
-        _rectHeight = _layout.height;
-        _rectWidth = _rectHeight / _preferredCropAspectRatio!;
-      } else
-        _rectHeight = _h;
-    }
-
-    // calculate new crop area respecting `_preferredCropAspectRatio`
-    if (((_controller.rotation != 90 && _controller.rotation != 270)) &&
-        _layout.height >= _layout.width) {
-      if (_preferredCropAspectRatio! >= 1)
-        _changeHeight();
-      else
-        _changeWidth();
-    } else {
-      if (_preferredCropAspectRatio! >= 1)
-        _changeWidth();
-      else
-        _changeHeight();
-    }
-
-    // create the new crop area around the current one
+    // update crop aspect ratio
     Rect _newCrop = Rect.fromCenter(
       center: _rect.value.center,
-      width: _rectWidth,
-      height: _rectHeight,
+      height: isLandscape ||
+              _preferredCropAspectRatio! >= (_rectHeight / _rectWidth)
+          ? _rectWidth / _preferredCropAspectRatio!
+          : _rectHeight,
+      width: !isLandscape ||
+              _preferredCropAspectRatio! < (_rectHeight / _rectWidth)
+          ? _rectHeight / _preferredCropAspectRatio!
+          : _rectWidth,
     );
 
-    // translate it in case it is out of bounds
-    if (_newCrop.bottom > _layout.height) {
-      _newCrop = _newCrop.translate(0, _layout.height - _newCrop.bottom);
-    }
-    if (_newCrop.top < 0.0) {
-      _newCrop = _newCrop.translate(0, _newCrop.top.abs());
-    }
-    if (_newCrop.left < 0.0) {
-      _newCrop = _newCrop.translate(_newCrop.left.abs(), 0);
-    }
-    if (_newCrop.right > _layout.width) {
-      _newCrop = _newCrop.translate(_layout.width - _newCrop.right, 0);
+    // if new crop is bigger than available space, block to maximum size and avoid out of bounds
+    if (_newCrop.width > _layout.width) {
+      final _h = _layout.width / _preferredCropAspectRatio!;
+      _newCrop = Rect.fromLTWH(
+        0.0,
+        _newCrop.top.clamp(0, _layout.height - _h),
+        _layout.width,
+        _h,
+      );
+    } else if (_newCrop.height > _layout.height) {
+      final _w = _layout.height / _preferredCropAspectRatio!;
+      _newCrop = Rect.fromLTWH(
+        _newCrop.left.clamp(0, _layout.width - _w),
+        0.0,
+        _layout.width,
+        _w,
+      );
+    } else {
+      // if new crop is out of bounds, translate inside layout
+      if (_newCrop.bottom > _layout.height) {
+        _newCrop = _newCrop.translate(0, _layout.height - _newCrop.bottom);
+      }
+      if (_newCrop.top < 0.0) {
+        _newCrop = _newCrop.translate(0, _newCrop.top.abs());
+      }
+      if (_newCrop.left < 0.0) {
+        _newCrop = _newCrop.translate(_newCrop.left.abs(), 0);
+      }
+      if (_newCrop.right > _layout.width) {
+        _newCrop = _newCrop.translate(_layout.width - _newCrop.right, 0);
+      }
     }
 
     setState(() {
@@ -241,7 +234,7 @@ class _CropGridViewerState extends State<CropGridViewer> {
       switch (_boundary) {
         case _CropBoundaries.inside:
           final Offset pos = _rect.value.topLeft + delta;
-          _rect.value = _rect.value = Rect.fromLTWH(
+          _rect.value = Rect.fromLTWH(
               pos.dx.clamp(0, _layout.width - _rect.value.width),
               pos.dy.clamp(0, _layout.height - _rect.value.height),
               _rect.value.width,
