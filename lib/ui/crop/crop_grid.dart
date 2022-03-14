@@ -100,26 +100,30 @@ class _CropGridViewerState extends State<CropGridViewer> {
   }
 
   void _calculatePreferedCrop() {
+    final _oldRatio = _controller.preferredCropAspectRatio;
     _preferredCropAspectRatio = _controller.preferredCropAspectRatio;
 
     if (_preferredCropAspectRatio == null) return;
 
     final double _rectHeight = _rect.value.height;
     final double _rectWidth = _rect.value.width;
-    final bool isLandscape = _layout.height > _layout.width;
 
     // update crop aspect ratio
-    Rect _newCrop = Rect.fromCenter(
-      center: _rect.value.center,
-      height: isLandscape ||
-              _preferredCropAspectRatio! >= (_rectHeight / _rectWidth)
-          ? _rectWidth / _preferredCropAspectRatio!
-          : _rectHeight,
-      width: !isLandscape ||
-              _preferredCropAspectRatio! < (_rectHeight / _rectWidth)
-          ? _rectHeight / _preferredCropAspectRatio!
-          : _rectWidth,
-    );
+    Rect _newCrop = _rect.value;
+    // if current crop ratio is bigger than new aspect ratio
+    // or if previous ratio smaller than new aspect ratio (so when switching of aspect ratio the crop area is not always getting smaller)
+    // resize on width
+    if (_rectWidth / _rectHeight > _preferredCropAspectRatio! &&
+        (_oldRatio != null && _oldRatio < _preferredCropAspectRatio!)) {
+      final w = _rectHeight * _preferredCropAspectRatio!;
+      _newCrop = Rect.fromLTWH(_rect.value.center.dx - w / 2, _rect.value.top,
+          w, _rect.value.height);
+    } else {
+      // otherwise, resize on height
+      final h = _rectWidth / _preferredCropAspectRatio!;
+      _newCrop = Rect.fromLTWH(_rect.value.left, _rect.value.center.dy - h / 2,
+          _rect.value.width, h);
+    }
 
     // if new crop is bigger than available space, block to maximum size and avoid out of bounds
     if (_newCrop.width > _layout.width) {
@@ -135,8 +139,8 @@ class _CropGridViewerState extends State<CropGridViewer> {
       _newCrop = Rect.fromLTWH(
         _newCrop.left.clamp(0, _layout.width - _w),
         0.0,
-        _layout.width,
         _w,
+        _layout.height,
       );
     } else {
       // if new crop is out of bounds, translate inside layout
