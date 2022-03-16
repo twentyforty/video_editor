@@ -359,10 +359,12 @@ class _CropGridViewerState extends State<CropGridViewer> {
           child: Container(
               constraints: BoxConstraints(
                   maxHeight: ((_controller.rotation == 90 ||
-                          _controller.rotation == 270))
+                              _controller.rotation == 270)) &&
+                          widget.showGrid
                       ? MediaQuery.of(context).size.width -
                           widget.horizontalMargin
                       : Size.infinite.height),
+              // TODO: on rotation 90 or 270 the crop area is bit lower on x axis (when crop dimension is around 1:1)
               child: CropTransform(
                   transform: transform,
                   child: VideoViewer(
@@ -373,6 +375,7 @@ class _CropGridViewerState extends State<CropGridViewer> {
                       if (_layout != size) {
                         _layout = size;
                         if (widget.showGrid) {
+                          // need to recompute crop if layout size changed, (i.e after rotation)
                           WidgetsBinding.instance!.addPostFrameCallback((_) {
                             _calculatePreferedCrop();
                           });
