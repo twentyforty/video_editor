@@ -26,27 +26,50 @@ class CropGridPainter extends CustomPainter {
     final Paint paint = Paint()
       ..color = showGrid ? style!.croppingBackground : style!.background;
 
+    double _width = size.width;
+    double _height = size.height;
+    double _bottom = rect.bottom;
+    double _top = rect.top;
+    double _left = rect.left;
+    double _right = rect.right;
+
+    // ceil parameters because while scaling, the position might not be accurates
+    // not done by default because request some performances
+    if (showGrid) {
+      _width = _width.ceilToDouble();
+      _height = _height.ceilToDouble();
+      _bottom = _bottom.ceilToDouble();
+      _top = _top.ceilToDouble();
+      _left = _left.ceilToDouble();
+      _right = _right.ceilToDouble();
+    }
+
+    // add bonus size to overlap the filled squares
+    final _bonusSize = showGrid ? 0.0 : 1.0;
+
     //TOP
     canvas.drawRect(
-      Rect.fromLTWH(0.0, -5.0, size.width, rect.top + 5.0),
+      Rect.fromLTWH(-_bonusSize, 0.0, _width + _bonusSize, _top),
       paint,
     );
     //BOTTOM
     canvas.drawRect(
       Rect.fromPoints(
-        Offset(0.0, rect.bottom),
-        Offset(size.width, size.height + 5.0),
+        Offset(-_bonusSize, _bottom),
+        Offset(_width + _bonusSize, _height),
       ),
       paint,
     );
     //LEFT
     canvas.drawRect(
-      Rect.fromPoints(Offset(-5.0, rect.topLeft.dy), rect.bottomLeft),
+      Rect.fromPoints(Offset(-_bonusSize, _top - _bonusSize),
+          Offset(_left, _bottom + _bonusSize)),
       paint,
     );
     //RIGHT
     canvas.drawRect(
-      Rect.fromPoints(rect.topRight, Offset(size.width + 5.0, rect.bottom)),
+      Rect.fromPoints(Offset(_right, _top - _bonusSize),
+          Offset(_width + _bonusSize, _bottom + _bonusSize)),
       paint,
     );
   }
