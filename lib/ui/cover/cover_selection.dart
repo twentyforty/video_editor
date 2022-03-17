@@ -38,9 +38,8 @@ class _CoverSelectionState extends State<CoverSelection>
   Size _layout = Size.zero;
   ValueNotifier<Rect> _rect = ValueNotifier<Rect>(Rect.zero);
   Stream<List<CoverData>>? _stream;
-  ValueNotifier<TransformData> _transform = ValueNotifier<TransformData>(
-    TransformData(rotation: 0.0, scale: 1.0, translate: Offset.zero),
-  );
+  ValueNotifier<TransformData> _transform =
+      ValueNotifier<TransformData>(TransformData());
 
   @override
   void dispose() {

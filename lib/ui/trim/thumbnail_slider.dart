@@ -28,9 +28,8 @@ class ThumbnailSlider extends StatefulWidget {
 
 class _ThumbnailSliderState extends State<ThumbnailSlider> {
   ValueNotifier<Rect> _rect = ValueNotifier<Rect>(Rect.zero);
-  ValueNotifier<TransformData> _transform = ValueNotifier<TransformData>(
-    TransformData(rotation: 0.0, scale: 1.0, translate: Offset.zero),
-  );
+  ValueNotifier<TransformData> _transform =
+      ValueNotifier<TransformData>(TransformData());
 
   double _aspect = 1.0, _width = 1.0;
   int _thumbnails = 8;

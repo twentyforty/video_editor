@@ -44,9 +44,8 @@ class CropGridViewer extends StatefulWidget {
 
 class _CropGridViewerState extends State<CropGridViewer> {
   final ValueNotifier<Rect> _rect = ValueNotifier<Rect>(Rect.zero);
-  final ValueNotifier<TransformData> _transform = ValueNotifier<TransformData>(
-    TransformData(rotation: 0.0, scale: 1.0, translate: Offset.zero),
-  );
+  final ValueNotifier<TransformData> _transform =
+      ValueNotifier<TransformData>(TransformData());
 
   Size _layout = Size.zero;
   Offset _margin = Offset.zero;

@@ -25,9 +25,8 @@ class CoverViewer extends StatefulWidget {
 
 class _CoverViewerState extends State<CoverViewer> {
   final ValueNotifier<Rect> _rect = ValueNotifier<Rect>(Rect.zero);
-  final ValueNotifier<TransformData> _transform = ValueNotifier<TransformData>(
-    TransformData(rotation: 0.0, scale: 1.0, translate: Offset.zero),
-  );
+  final ValueNotifier<TransformData> _transform =
+      ValueNotifier<TransformData>(TransformData());
 
   Size _layout = Size.zero;
 
