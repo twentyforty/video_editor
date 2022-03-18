@@ -377,7 +377,6 @@ class _CropGridViewerState extends State<CropGridViewer> {
               constraints: BoxConstraints(
                 maxHeight: _getMaxHeight(context),
               ),
-              // TODO: on rotation 90 or 270 the crop area is bit lower on x axis (when crop dimension is around 1:1)
               child: CropTransform(
                   transform: transform,
                   child: VideoViewer(
