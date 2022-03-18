@@ -350,6 +350,24 @@ class _CropGridViewerState extends State<CropGridViewer> {
     );
   }
 
+  /// The height of the container must be limited to avoid scaling issue (c.f [#78](https://github.com/seel-channel/video_editor/issues/78))
+  double _getMaxHeight(BuildContext context) {
+    final double _maxHeight =
+        MediaQuery.of(context).size.width - widget.horizontalMargin;
+    if (widget.showGrid) {
+      if (_controller.rotation == 90 || _controller.rotation == 270)
+        return _maxHeight;
+      else
+        return Size.infinite.height;
+    } else {
+      if (_rect.value != Rect.zero &&
+          _rect.value.height / _rect.value.width >= 1)
+        return _maxHeight;
+      else
+        return Size.infinite.height;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder(
@@ -357,12 +375,8 @@ class _CropGridViewerState extends State<CropGridViewer> {
       builder: (_, TransformData transform, __) => Center(
           child: Container(
               constraints: BoxConstraints(
-                  maxHeight: ((_controller.rotation == 90 ||
-                              _controller.rotation == 270)) &&
-                          widget.showGrid
-                      ? MediaQuery.of(context).size.width -
-                          widget.horizontalMargin
-                      : Size.infinite.height),
+                maxHeight: _getMaxHeight(context),
+              ),
               // TODO: on rotation 90 or 270 the crop area is bit lower on x axis (when crop dimension is around 1:1)
               child: CropTransform(
                   transform: transform,

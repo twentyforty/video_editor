@@ -22,7 +22,6 @@ class TransformData {
     final double xScale = layout.width / rect.width;
     final double yScale = layout.height / rect.height;
 
-    // TODO: on rotation 90 or 270 the crop area is bit lower on x axis (when crop dimension is around 1:1)
     final double scale = videoAspect < 0.8
         ? relativeAspect <= 1
             ? yScale
