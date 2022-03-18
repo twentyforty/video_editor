@@ -49,14 +49,14 @@ class CropGridPainter extends CustomPainter {
 
     //TOP
     canvas.drawRect(
-      Rect.fromLTWH(-_bonusSize, 0.0, _width + _bonusSize, _top),
+      Rect.fromLTWH(-_bonusSize, -_bonusSize, _width + _bonusSize * 2, _top),
       paint,
     );
     //BOTTOM
     canvas.drawRect(
       Rect.fromPoints(
         Offset(-_bonusSize, _bottom),
-        Offset(_width + _bonusSize, _height),
+        Offset(_width + _bonusSize, _height + _bonusSize),
       ),
       paint,
     );
@@ -69,7 +69,7 @@ class CropGridPainter extends CustomPainter {
     //RIGHT
     canvas.drawRect(
       Rect.fromPoints(Offset(_right, _top - _bonusSize),
-          Offset(_width + _bonusSize, _bottom + _bonusSize)),
+          Offset(_width + _bonusSize * 2, _bottom + _bonusSize)),
       paint,
     );
   }
