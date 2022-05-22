@@ -96,7 +96,6 @@ class _CropGridViewerState extends State<CropGridViewer> {
 
   /// Compute new [Rect] crop area depending of [_controller] data and layout size
   void _calculatePreferedCrop() {
-    final oldRatio = _controller.preferredCropAspectRatio;
     _preferredCropAspectRatio = _controller.preferredCropAspectRatio;
 
     // set cached crop values to adjust it later
@@ -109,11 +108,9 @@ class _CropGridViewerState extends State<CropGridViewer> {
     Rect newCrop = _rect.value;
 
     if (_preferredCropAspectRatio != null) {
-      // if current crop ratio is bigger than new aspect ratio
-      // or if previous ratio smaller than new aspect ratio (so when switching of aspect ratio the crop area is not always getting smaller)
-      // resize on width
-      if (rectWidth / rectHeight > _preferredCropAspectRatio! &&
-          (oldRatio != null && oldRatio < _preferredCropAspectRatio!)) {
+      // resize on the biggest axis
+      // so when switching of aspect ratio the crop area is not always getting smaller
+      if (_layout.width > _layout.height) {
         final w = rectHeight * _preferredCropAspectRatio!;
         newCrop = Rect.fromLTWH(_rect.value.center.dx - w / 2, _rect.value.top,
             w, _rect.value.height);

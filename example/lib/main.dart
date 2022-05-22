@@ -488,13 +488,15 @@ class CropScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              buildSplashTap("16:9", 16 / 9,
-                  padding: const EdgeInsets.symmetric(horizontal: 10)),
+              const SizedBox(width: 10),
+              buildSplashTap("9:16", 9 / 16),
+              const SizedBox(width: 10),
               buildSplashTap("1:1", 1 / 1),
-              buildSplashTap("4:5", 4 / 5,
-                  padding: const EdgeInsets.symmetric(horizontal: 10)),
-              buildSplashTap("NO", null,
-                  padding: const EdgeInsets.only(right: 10)),
+              const SizedBox(width: 10),
+              buildSplashTap("16:9", 16 / 9),
+              const SizedBox(width: 10),
+              buildSplashTap("NO", null),
+              const SizedBox(width: 10),
               Expanded(
                 child: IconButton(
                   onPressed: () {
@@ -522,25 +524,18 @@ class CropScreen extends StatelessWidget {
     );
   }
 
-  Widget buildSplashTap(
-    String title,
-    double? aspectRatio, {
-    EdgeInsetsGeometry? padding,
-  }) {
+  Widget buildSplashTap(String title, double? aspectRatio) {
     return InkWell(
       onTap: () => controller.preferredCropAspectRatio = aspectRatio,
-      child: Padding(
-        padding: padding ?? EdgeInsets.zero,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.aspect_ratio, color: Colors.white),
-            Text(
-              title,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.aspect_ratio, color: Colors.white),
+          Text(
+            title,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ],
       ),
     );
   }
